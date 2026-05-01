@@ -12,3 +12,10 @@ build/
 .idea/
 .env.production
 .env.development
+
+# Debug scripts
+server/scripts/debug-*.js
+server/scripts/test-*.js
+server/scripts/clean-*.js
+server/scripts/diagnose-*.js
+server/scripts/verify-*.js
