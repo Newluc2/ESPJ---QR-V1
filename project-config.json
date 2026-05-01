@@ -1,0 +1,211 @@
+{
+  "testUsers": [
+    {
+      "id": "1",
+      "firstName": "Jean",
+      "lastName": "Dupont",
+      "email": "jean.dupont@example.com",
+      "department": "IT",
+      "description": "Développeur Senior"
+    },
+    {
+      "id": "2",
+      "firstName": "Marie",
+      "lastName": "Martin",
+      "email": "marie.martin@example.com",
+      "department": "HR",
+      "description": "Responsable RH"
+    },
+    {
+      "id": "3",
+      "firstName": "Pierre",
+      "lastName": "Bernard",
+      "email": "pierre.bernard@example.com",
+      "department": "Finance",
+      "description": "Directeur Financier"
+    },
+    {
+      "id": "4",
+      "firstName": "Sophie",
+      "lastName": "Dupuis",
+      "email": "sophie.dupuis@example.com",
+      "department": "Marketing",
+      "description": "Chef de Projet Marketing"
+    },
+    {
+      "id": "5",
+      "firstName": "Luc",
+      "lastName": "Francois",
+      "email": "luc.francois@example.com",
+      "department": "Operations",
+      "description": "Responsable Opérations"
+    }
+  ],
+  "adminCredentials": {
+    "username": "admin",
+    "password": "admin123",
+    "note": "À changer en production"
+  },
+  "testScenarios": [
+    {
+      "name": "Arrivée - Sortie",
+      "steps": [
+        "Accédez à http://localhost:5173/scan?userId=1",
+        "Cliquez sur VALIDER (enregistre l'arrivée)",
+        "Attendez quelques secondes",
+        "Cliquez sur VALIDER à nouveau (enregistre la sortie)"
+      ],
+      "expected": "Les deux pointages doivent apparaître dans le Google Sheet"
+    },
+    {
+      "name": "Génération QR Code",
+      "steps": [
+        "Allez sur http://localhost:5173/admin/login",
+        "Connectez-vous avec le mot de passe admin",
+        "Cliquez sur 'Générer QR' pour un utilisateur",
+        "Téléchargez le QR code"
+      ],
+      "expected": "Un fichier PNG du QR code est téléchargé"
+    },
+    {
+      "name": "Ajouter un Utilisateur",
+      "steps": [
+        "Depuis le panel admin",
+        "Cliquez 'Ajouter un Utilisateur'",
+        "Remplissez le formulaire",
+        "Cliquez 'Ajouter'"
+      ],
+      "expected": "L'utilisateur apparaît dans la liste et dans Google Sheets"
+    }
+  ],
+  "apiTests": [
+    {
+      "name": "Get User",
+      "method": "GET",
+      "endpoint": "/api/users/1",
+      "curl": "curl http://localhost:5000/api/users/1"
+    },
+    {
+      "name": "Register Attendance",
+      "method": "POST",
+      "endpoint": "/api/attendance/register",
+      "curl": "curl -X POST http://localhost:5000/api/attendance/register -H 'Content-Type: application/json' -d '{\"userId\": \"1\"}'"
+    },
+    {
+      "name": "Admin Login",
+      "method": "POST",
+      "endpoint": "/api/auth/login",
+      "curl": "curl -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"password\": \"admin123\"}'"
+    },
+    {
+      "name": "Get All Attendance Today",
+      "method": "GET",
+      "endpoint": "/api/admin/attendance/today",
+      "curl": "curl -H 'Authorization: Bearer <token>' http://localhost:5000/api/admin/attendance/today"
+    }
+  ],
+  "googleSheetsStructure": {
+    "sheet1": {
+      "name": "Utilisateurs",
+      "columns": [
+        {
+          "name": "ID",
+          "type": "String",
+          "required": true
+        },
+        {
+          "name": "Prénom",
+          "type": "String",
+          "required": true
+        },
+        {
+          "name": "Nom",
+          "type": "String",
+          "required": true
+        },
+        {
+          "name": "Email",
+          "type": "String",
+          "required": false
+        },
+        {
+          "name": "Département",
+          "type": "String",
+          "required": false
+        }
+      ]
+    },
+    "sheet2": {
+      "name": "Pointages",
+      "columns": [
+        {
+          "name": "Date",
+          "type": "Date",
+          "format": "DD/MM/YYYY",
+          "required": true
+        },
+        {
+          "name": "Nom",
+          "type": "String",
+          "required": true
+        },
+        {
+          "name": "Prénom",
+          "type": "String",
+          "required": true
+        },
+        {
+          "name": "ID Utilisateur",
+          "type": "String",
+          "required": true
+        },
+        {
+          "name": "Heure Arrivée",
+          "type": "Time",
+          "format": "HH:MM",
+          "required": true
+        },
+        {
+          "name": "Heure Sortie",
+          "type": "Time",
+          "format": "HH:MM",
+          "required": false
+        },
+        {
+          "name": "Statut",
+          "type": "Enum",
+          "values": ["Présent", "Absent", "Congé"],
+          "required": true
+        }
+      ]
+    }
+  },
+  "environmentVariables": {
+    "server": {
+      "PORT": "5000",
+      "NODE_ENV": "development",
+      "JWT_SECRET": "your_secret_here_change_in_production",
+      "ADMIN_PASSWORD": "admin123",
+      "GOOGLE_SHEET_ID": "your_sheet_id",
+      "GOOGLE_SERVICE_ACCOUNT_EMAIL": "your-account@project.iam.gserviceaccount.com",
+      "GOOGLE_PRIVATE_KEY": "your_private_key_here",
+      "CLIENT_URL": "http://localhost:5173"
+    },
+    "client": {
+      "VITE_API_BASE_URL": "http://localhost:5000/api"
+    }
+  },
+  "deploymentChecklist": [
+    "Google Service Account créé et configuré",
+    "Google Sheet créé et partagé",
+    "Fichier .env complété avec les informations Google",
+    "npm install exécuté dans server/ et client/",
+    "npm run init-sheets exécuté dans server/",
+    "Serveur démarrage avec npm run dev",
+    "Client démarrage avec npm run dev",
+    "Tests locaux effectués",
+    "Mot de passe admin changé",
+    "JWT_SECRET changé"
+  ],
+  "productionNote": "Assurez-vous de changer ALL_SECRETS avant de déployer en production!"
+}
