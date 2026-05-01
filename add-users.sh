@@ -30,11 +30,11 @@ echo ""
 
 # Liste d'utilisateurs à ajouter
 declare -a users=(
-    '{"id":"10","firstName":"Anne","lastName":"Garcia","email":"anne@example.com","department":"Marketing"}'
-    '{"id":"11","firstName":"Carlos","lastName":"Rodriguez","email":"carlos@example.com","department":"Sales"}'
-    '{"id":"12","firstName":"Lisa","lastName":"Chen","email":"lisa@example.com","department":"IT"}'
-    '{"id":"13","firstName":"Ahmed","lastName":"Hassan","email":"ahmed@example.com","department":"Operations"}'
-    '{"id":"14","firstName":"Emma","lastName":"Wilson","email":"emma@example.com","department":"HR"}'
+    '{"id":"10","firstName":"Anne","lastName":"Garcia","email":"anne@example.com"}'
+    '{"id":"11","firstName":"Carlos","lastName":"Rodriguez","email":"carlos@example.com"}'
+    '{"id":"12","firstName":"Lisa","lastName":"Chen","email":"lisa@example.com"}'
+    '{"id":"13","firstName":"Ahmed","lastName":"Hassan","email":"ahmed@example.com"}'
+    '{"id":"14","firstName":"Emma","lastName":"Wilson","email":"emma@example.com"}'
 )
 
 # Demander le token admin

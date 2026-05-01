@@ -15,8 +15,7 @@ function AdminDashboard() {
     id: '',
     firstName: '',
     lastName: '',
-    email: '',
-    department: ''
+    email: ''
   })
   const [showAddUser, setShowAddUser] = useState(false)
   const navigate = useNavigate()
@@ -72,8 +71,7 @@ function AdminDashboard() {
         id: '',
         firstName: '',
         lastName: '',
-        email: '',
-        department: ''
+        email: ''
       })
       setShowAddUser(false)
       loadData()
@@ -264,13 +262,6 @@ function AdminDashboard() {
                     onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   />
-                  <input
-                    type="text"
-                    placeholder="Département"
-                    value={newUser.department}
-                    onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                  />
                   <button
                     type="submit"
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition"
@@ -312,9 +303,6 @@ function AdminDashboard() {
                         <div>
                           <p className="font-semibold text-gray-900">{user.firstName} {user.lastName}</p>
                           <p className="text-xs text-gray-500">ID: {user.id}</p>
-                          {user.department && (
-                            <p className="text-xs text-gray-500">{user.department}</p>
-                          )}
                         </div>
                       </div>
                       <button

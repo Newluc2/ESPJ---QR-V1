@@ -104,7 +104,6 @@ function ScanPage() {
               <h1 className="text-3xl font-bold text-gray-800 mb-1">
                 {user.firstName} {user.lastName}
               </h1>
-              <p className="text-gray-500 text-sm">{user.department}</p>
             </div>
 
             {/* Current Time */}

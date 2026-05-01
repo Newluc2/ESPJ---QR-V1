@@ -23,9 +23,9 @@ async function initializeSheets() {
     if (existingUsers.length === 0) {
       console.log('📝 Adding sample users...');
       const sampleUsers = [
-        { id: '1', firstName: 'Jean', lastName: 'Dupont', email: 'jean@example.com', department: 'IT' },
-        { id: '2', firstName: 'Marie', lastName: 'Martin', email: 'marie@example.com', department: 'HR' },
-        { id: '3', firstName: 'Pierre', lastName: 'Bernard', email: 'pierre@example.com', department: 'Finance' }
+        { id: '1', firstName: 'Jean', lastName: 'Dupont', email: 'jean@example.com' },
+        { id: '2', firstName: 'Marie', lastName: 'Martin', email: 'marie@example.com' },
+        { id: '3', firstName: 'Pierre', lastName: 'Bernard', email: 'pierre@example.com' }
       ];
 
       for (const user of sampleUsers) {

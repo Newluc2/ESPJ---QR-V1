@@ -53,7 +53,7 @@ router.get('/qrcode/:userId', adminMiddleware, async (req, res) => {
 // Add user (admin only)
 router.post('/users', adminMiddleware, async (req, res) => {
   try {
-    const { id, firstName, lastName, email, department } = req.body;
+    const { id, firstName, lastName, email } = req.body;
 
     if (!id || !firstName || !lastName) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -63,8 +63,7 @@ router.post('/users', adminMiddleware, async (req, res) => {
       id,
       firstName,
       lastName,
-      email,
-      department
+      email
     });
 
     res.json({ success: true, message: 'User added successfully' });

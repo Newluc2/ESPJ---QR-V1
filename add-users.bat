@@ -40,11 +40,11 @@ echo ✅ Token obtenu
 echo.
 
 REM Liste d'utilisateurs
-set users[0]={"id":"10","firstName":"Anne","lastName":"Garcia","email":"anne@example.com","department":"Marketing"}
-set users[1]={"id":"11","firstName":"Carlos","lastName":"Rodriguez","email":"carlos@example.com","department":"Sales"}
-set users[2]={"id":"12","firstName":"Lisa","lastName":"Chen","email":"lisa@example.com","department":"IT"}
-set users[3]={"id":"13","firstName":"Ahmed","lastName":"Hassan","email":"ahmed@example.com","department":"Operations"}
-set users[4]={"id":"14","firstName":"Emma","lastName":"Wilson","email":"emma@example.com","department":"HR"}
+set users[0]={"id":"10","firstName":"Anne","lastName":"Garcia","email":"anne@example.com"}
+set users[1]={"id":"11","firstName":"Carlos","lastName":"Rodriguez","email":"carlos@example.com"}
+set users[2]={"id":"12","firstName":"Lisa","lastName":"Chen","email":"lisa@example.com"}
+set users[3]={"id":"13","firstName":"Ahmed","lastName":"Hassan","email":"ahmed@example.com"}
+set users[4]={"id":"14","firstName":"Emma","lastName":"Wilson","email":"emma@example.com"}
 
 set count=0
 for /L %%i in (0,1,4) do (

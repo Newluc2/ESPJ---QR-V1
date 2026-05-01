@@ -5,7 +5,6 @@
       "firstName": "Jean",
       "lastName": "Dupont",
       "email": "jean.dupont@example.com",
-      "department": "IT",
       "description": "Développeur Senior"
     },
     {
@@ -13,7 +12,6 @@
       "firstName": "Marie",
       "lastName": "Martin",
       "email": "marie.martin@example.com",
-      "department": "HR",
       "description": "Responsable RH"
     },
     {
@@ -21,7 +19,6 @@
       "firstName": "Pierre",
       "lastName": "Bernard",
       "email": "pierre.bernard@example.com",
-      "department": "Finance",
       "description": "Directeur Financier"
     },
     {
@@ -29,7 +26,6 @@
       "firstName": "Sophie",
       "lastName": "Dupuis",
       "email": "sophie.dupuis@example.com",
-      "department": "Marketing",
       "description": "Chef de Projet Marketing"
     },
     {
@@ -37,7 +33,6 @@
       "firstName": "Luc",
       "lastName": "Francois",
       "email": "luc.francois@example.com",
-      "department": "Operations",
       "description": "Responsable Opérations"
     }
   ],
@@ -125,11 +120,6 @@
         },
         {
           "name": "Email",
-          "type": "String",
-          "required": false
-        },
-        {
-          "name": "Département",
           "type": "String",
           "required": false
         }
