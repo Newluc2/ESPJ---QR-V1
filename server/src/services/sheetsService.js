@@ -54,10 +54,11 @@ class SheetsService {
       await sheet.loadHeaderRow();
       const rows = await sheet.getRows();
       
-      // Chercher la ligne de l'utilisateur pour aujourd'hui
+      // Chercher la dernière ligne de l'utilisateur pour aujourd'hui (pas encore partée)
       let userRow = rows.find(row => 
         row.get('ID Utilisateur') === String(userId) && 
-        row.get('Date') === today
+        row.get('Date') === today &&
+        (row.get('Heure Sortie') === '-' || row.get('Heure Sortie') === '')
       );
 
       const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -99,9 +100,11 @@ class SheetsService {
       await sheet.loadHeaderRow();
       const rows = await sheet.getRows();
       
+      // Chercher la dernière ligne sans sortie (l'utilisateur est encore présent)
       const userRecord = rows.find(row => 
         row.get('ID Utilisateur') === String(userId) && 
-        row.get('Date') === today
+        row.get('Date') === today &&
+        (row.get('Heure Sortie') === '-' || row.get('Heure Sortie') === '')
       );
 
       if (!userRecord) {
