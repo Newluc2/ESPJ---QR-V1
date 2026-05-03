@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminService } from '../services/api'
 import { LogOut, Users, QrCode, RefreshCw, Download, Plus } from 'lucide-react'
-import QRCodeComponent from 'qrcode.react'
 
 function AdminDashboard() {
   const [attendance, setAttendance] = useState([])
