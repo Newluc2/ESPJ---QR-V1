@@ -7,6 +7,22 @@ class SheetsService {
     this.initialized = false;
   }
 
+  getFieldValue(source, keys) {
+    for (const key of keys) {
+      const getterValue = typeof source.get === 'function' ? source.get(key) : undefined;
+      if (getterValue !== undefined && getterValue !== null && String(getterValue).trim() !== '') {
+        return String(getterValue).trim();
+      }
+
+      const directValue = source[key];
+      if (directValue !== undefined && directValue !== null && String(directValue).trim() !== '') {
+        return String(directValue).trim();
+      }
+    }
+
+    return '';
+  }
+
   async initialize() {
     if (this.initialized) return;
 
@@ -169,7 +185,13 @@ class SheetsService {
         firstName: user.get('Prénom') || user['Prénom'] || user.Prénom,
         lastName: user.get('Nom') || user['Nom'] || user.Nom,
         email: user.get('Email') || user['Email'] || user.Email || '',
-        birthDate: user.get('Date de naissance') || user['Date de naissance'] || user['DateNaissance'] || ''
+        birthDate: this.getFieldValue(user, [
+          'Date de naissance',
+          'Date de Naissance',
+          'DateNaissance',
+          'Date de naissance ',
+          'Date de Naissance '
+        ])
       };
     } catch (error) {
       console.error('Error getting user data:', error);
@@ -188,7 +210,13 @@ class SheetsService {
         firstName: row.get('Prénom') || row['Prénom'] || row.Prénom,
         lastName: row.get('Nom') || row['Nom'] || row.Nom,
         email: row.get('Email') || row['Email'] || row.Email || '',
-        birthDate: row.get('Date de naissance') || row['Date de naissance'] || row['DateNaissance'] || ''
+        birthDate: this.getFieldValue(row, [
+          'Date de naissance',
+          'Date de Naissance',
+          'DateNaissance',
+          'Date de naissance ',
+          'Date de Naissance '
+        ])
       }));
     } catch (error) {
       console.error('Error getting all users:', error);
@@ -202,9 +230,9 @@ class SheetsService {
       await sheet.addRow({
         'Id': userData.id,
         'Prénom': userData.firstName,
-        'Nom': userData.lastName,,
+        'Nom': userData.lastName,
+        'Email': userData.email || '',
         'Date de naissance': userData.birthDate || ''
-        'Email': userData.email || ''
       });
       return { success: true };
     } catch (error) {

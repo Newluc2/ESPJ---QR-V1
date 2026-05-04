@@ -41,7 +41,7 @@ function ScanPage() {
         const response = await userService.getUser(userId)
         setUser(response.data)
       } catch (err) {
-        setError('Utilisateur non trouv�')
+        setError('Utilisateur non trouvé')
         console.error(err)
       } finally {
         setLoading(false)
@@ -53,15 +53,6 @@ function ScanPage() {
 
   const handleSubmit = async () => {
     if (!userId || submitted) return
-
-    // Check if user has birthDate
-    if (!user?.birthDate) {
-      setMessage({
-        type: 'error',
-        text: 'Date de naissance non enregistr�e'
-      })
-      return
-    }
 
     setShowBirthDateModal(true)
     setBirthDateError('')
@@ -76,6 +67,11 @@ function ScanPage() {
 
     if (!enteredDate) {
       setBirthDateError('Veuillez entrer votre date de naissance')
+      return
+    }
+
+    if (!storedDate) {
+      setBirthDateError('La date de naissance n\'est pas configurée pour ce compte')
       return
     }
 
@@ -95,7 +91,7 @@ function ScanPage() {
       
       setMessage({
         type: 'success',
-        text: `${response.data.type} enregistr�e � ${response.data.time}`
+        text: `${response.data.type} enregistrée à ${response.data.time}`
       })
 
       setTimeout(() => {
@@ -204,23 +200,27 @@ function ScanPage() {
 
               {/* Footer */}
               <div className="text-center text-sm text-gray-500 mt-6 pt-6 border-t border-gray-200">
-                <p>Syst�me de pointage automatique</p>
+                <p>Système de pointage automatique</p>
               </div>
             </div>
 
-            {/* Birth Date Verification Modal */}
+            {/* Birth Date Notification */}
             {showBirthDateModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Vérification d'identité</h2>
-                  <p className="text-gray-600 mb-6">
-                    Pour confirmer votre identit�, veuillez entrer votre date de naissance.
-                  </p>
+              <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center p-4 pt-8">
+                <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-indigo-100 overflow-hidden">
+                  <div className="bg-indigo-600 px-5 py-4 text-white">
+                    <p className="text-xs font-semibold uppercase tracking-wider opacity-90">Notification de sécurité</p>
+                    <h2 className="text-xl font-bold mt-1">Confirmer la date de naissance</h2>
+                  </div>
 
-                  <div className="space-y-4">
+                  <div className="p-5 space-y-4">
+                    <p className="text-gray-600 text-sm leading-6">
+                      Entrez votre date de naissance pour confirmer que c'est bien vous.
+                    </p>
+
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Date de naissance (JJ/MM/AAAA)
+                        Date de naissance au format JJ/MM/AAAA
                       </label>
                       <input
                         type="text"
@@ -230,27 +230,28 @@ function ScanPage() {
                           setEnteredBirthDate(e.target.value)
                           setBirthDateError('')
                         }}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-lg tracking-wide"
                         maxLength="10"
+                        autoFocus
                       />
                     </div>
 
                     {birthDateError && (
-                      <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 text-sm">
+                      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-700 text-sm">
                         {birthDateError}
                       </div>
                     )}
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 pt-1">
                       <button
                         onClick={handleConfirmBirthDate}
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200"
                       >
                         Confirmer
                       </button>
                       <button
                         onClick={handleCancelBirthDate}
-                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200"
+                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition duration-200"
                       >
                         Annuler
                       </button>
