@@ -11,6 +11,9 @@ function ScanPage() {
   const [message, setMessage] = useState(null)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [submitted, setSubmitted] = useState(false)
+  const [showBirthDateModal, setShowBirthDateModal] = useState(false)
+  const [enteredBirthDate, setEnteredBirthDate] = useState('')
+  const [birthDateError, setBirthDateError] = useState('')
 
   const userId = searchParams.get('userId')
 
@@ -38,7 +41,7 @@ function ScanPage() {
         const response = await userService.getUser(userId)
         setUser(response.data)
       } catch (err) {
-        setError('Utilisateur non trouvé')
+        setError('Utilisateur non trouv�')
         console.error(err)
       } finally {
         setLoading(false)
@@ -51,13 +54,48 @@ function ScanPage() {
   const handleSubmit = async () => {
     if (!userId || submitted) return
 
+    // Check if user has birthDate
+    if (!user?.birthDate) {
+      setMessage({
+        type: 'error',
+        text: 'Date de naissance non enregistr�e'
+      })
+      return
+    }
+
+    setShowBirthDateModal(true)
+    setBirthDateError('')
+    setEnteredBirthDate('')
+  }
+
+  const handleConfirmBirthDate = async () => {
+    // Normalize dates for comparison (remove all non-digit characters)
+    const normalizeDate = (date) => date?.replace(/\D/g, '') || ''
+    const storedDate = normalizeDate(user.birthDate)
+    const enteredDate = normalizeDate(enteredBirthDate)
+
+    if (!enteredDate) {
+      setBirthDateError('Veuillez entrer votre date de naissance')
+      return
+    }
+
+    if (storedDate !== enteredDate) {
+      setBirthDateError('Date de naissance incorrecte')
+      setEnteredBirthDate('')
+      return
+    }
+
+    // Date is correct, proceed with registration
+    setShowBirthDateModal(false)
+    setBirthDateError('')
+
     try {
       setSubmitted(true)
       const response = await attendanceService.register(userId)
       
       setMessage({
         type: 'success',
-        text: `${response.data.type} enregistrée à ${response.data.time}`
+        text: `${response.data.type} enregistr�e � ${response.data.time}`
       })
 
       setTimeout(() => {
@@ -71,6 +109,12 @@ function ScanPage() {
       })
       setSubmitted(false)
     }
+  }
+
+  const handleCancelBirthDate = () => {
+    setShowBirthDateModal(false)
+    setBirthDateError('')
+    setEnteredBirthDate('')
   }
 
   if (loading) {
@@ -95,73 +139,127 @@ function ScanPage() {
             <p className="text-red-600 text-sm mt-4">Veuillez scanner un QR Code valide</p>
           </div>
         ) : user ? (
-          <div className="bg-white rounded-lg shadow-2xl p-8">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl font-bold text-indigo-600">{user.firstName.charAt(0)}</span>
+          <>
+            <div className="bg-white rounded-lg shadow-2xl p-8">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl font-bold text-indigo-600">{user.firstName.charAt(0)}</span>
+                </div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-1">
+                  {user.firstName} {user.lastName}
+                </h1>
               </div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-1">
-                {user.firstName} {user.lastName}
-              </h1>
+
+              {/* Current Time */}
+              <div className="bg-indigo-50 rounded-lg p-6 mb-8 text-center">
+                <div className="flex items-center justify-center text-indigo-600 mb-2">
+                  <Clock size={20} className="mr-2" />
+                  <span className="text-sm font-semibold">HEURE ACTUELLE</span>
+                </div>
+                <div className="text-5xl font-bold text-indigo-900">
+                  {currentTime.toLocaleTimeString('fr-FR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </div>
+                <div className="text-sm text-gray-600 mt-2">
+                  {currentTime.toLocaleDateString('fr-FR', { 
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                onClick={handleSubmit}
+                disabled={submitted}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3 px-6 rounded-lg transition duration-200 text-lg mb-4"
+              >
+                {submitted ? 'Enregistrement...' : 'VALIDER'}
+              </button>
+
+              {/* Message */}
+              {message && (
+                <div className={`rounded-lg p-4 flex items-start ${
+                  message.type === 'success' 
+                    ? 'bg-green-50 border border-green-200' 
+                    : 'bg-red-50 border border-red-200'
+                }`}>
+                  <CheckCircle 
+                    size={20} 
+                    className={`mr-3 flex-shrink-0 ${
+                      message.type === 'success' ? 'text-green-600' : 'text-red-600'
+                    }`} 
+                  />
+                  <p className={message.type === 'success' ? 'text-green-700' : 'text-red-700'}>
+                    {message.text}
+                  </p>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="text-center text-sm text-gray-500 mt-6 pt-6 border-t border-gray-200">
+                <p>Syst�me de pointage automatique</p>
+              </div>
             </div>
 
-            {/* Current Time */}
-            <div className="bg-indigo-50 rounded-lg p-6 mb-8 text-center">
-              <div className="flex items-center justify-center text-indigo-600 mb-2">
-                <Clock size={20} className="mr-2" />
-                <span className="text-sm font-semibold">HEURE ACTUELLE</span>
-              </div>
-              <div className="text-5xl font-bold text-indigo-900">
-                {currentTime.toLocaleTimeString('fr-FR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  second: '2-digit'
-                })}
-              </div>
-              <div className="text-sm text-gray-600 mt-2">
-                {currentTime.toLocaleDateString('fr-FR', { 
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
-              </div>
-            </div>
+            {/* Birth Date Verification Modal */}
+            {showBirthDateModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-lg shadow-2xl p-8 max-w-sm w-full">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Vérification d'identité</h2>
+                  <p className="text-gray-600 mb-6">
+                    Pour confirmer votre identit�, veuillez entrer votre date de naissance.
+                  </p>
 
-            {/* Submit Button */}
-            <button
-              onClick={handleSubmit}
-              disabled={submitted}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3 px-6 rounded-lg transition duration-200 text-lg mb-4"
-            >
-              {submitted ? 'Enregistrement...' : 'VALIDER'}
-            </button>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Date de naissance (JJ/MM/AAAA)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="01/01/2000"
+                        value={enteredBirthDate}
+                        onChange={(e) => {
+                          setEnteredBirthDate(e.target.value)
+                          setBirthDateError('')
+                        }}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                        maxLength="10"
+                      />
+                    </div>
 
-            {/* Message */}
-            {message && (
-              <div className={`rounded-lg p-4 flex items-start ${
-                message.type === 'success' 
-                  ? 'bg-green-50 border border-green-200' 
-                  : 'bg-red-50 border border-red-200'
-              }`}>
-                <CheckCircle 
-                  size={20} 
-                  className={`mr-3 flex-shrink-0 ${
-                    message.type === 'success' ? 'text-green-600' : 'text-red-600'
-                  }`} 
-                />
-                <p className={message.type === 'success' ? 'text-green-700' : 'text-red-700'}>
-                  {message.text}
-                </p>
+                    {birthDateError && (
+                      <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-700 text-sm">
+                        {birthDateError}
+                      </div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleConfirmBirthDate}
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                      >
+                        Confirmer
+                      </button>
+                      <button
+                        onClick={handleCancelBirthDate}
+                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-200"
+                      >
+                        Annuler
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-
-            {/* Footer */}
-            <div className="text-center text-sm text-gray-500 mt-6 pt-6 border-t border-gray-200">
-              <p>Système de pointage automatique</p>
-            </div>
-          </div>
+          </>
         ) : null}
       </div>
     </div>

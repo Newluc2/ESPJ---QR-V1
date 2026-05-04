@@ -34,7 +34,7 @@ class SheetsService {
 
     if (!sheet) {
       const headerValues = title === 'Utilisateurs'
-        ? ['ID', 'Prénom', 'Nom', 'Email']
+        ? ['ID', 'Prénom', 'Nom', 'Email', 'Date de naissance']
         : ['Date', 'Nom', 'Prénom', 'ID Utilisateur', 'Heure Arrivée', 'Heure Sortie', 'Statut'];
 
       sheet = await this.doc.addSheet({
@@ -168,7 +168,8 @@ class SheetsService {
         id: user.get('Id') || user.get('ID') || user.Id || user.ID || user['Id'] || user['ID'],
         firstName: user.get('Prénom') || user['Prénom'] || user.Prénom,
         lastName: user.get('Nom') || user['Nom'] || user.Nom,
-        email: user.get('Email') || user['Email'] || user.Email || ''
+        email: user.get('Email') || user['Email'] || user.Email || '',
+        birthDate: user.get('Date de naissance') || user['Date de naissance'] || user['DateNaissance'] || ''
       };
     } catch (error) {
       console.error('Error getting user data:', error);
@@ -186,7 +187,8 @@ class SheetsService {
         id: row.get('Id') || row.get('ID') || row.Id || row.ID || row['Id'] || row['ID'],
         firstName: row.get('Prénom') || row['Prénom'] || row.Prénom,
         lastName: row.get('Nom') || row['Nom'] || row.Nom,
-        email: row.get('Email') || row['Email'] || row.Email || ''
+        email: row.get('Email') || row['Email'] || row.Email || '',
+        birthDate: row.get('Date de naissance') || row['Date de naissance'] || row['DateNaissance'] || ''
       }));
     } catch (error) {
       console.error('Error getting all users:', error);
@@ -200,7 +202,8 @@ class SheetsService {
       await sheet.addRow({
         'Id': userData.id,
         'Prénom': userData.firstName,
-        'Nom': userData.lastName,
+        'Nom': userData.lastName,,
+        'Date de naissance': userData.birthDate || ''
         'Email': userData.email || ''
       });
       return { success: true };

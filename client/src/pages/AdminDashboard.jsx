@@ -14,7 +14,8 @@ function AdminDashboard() {
     id: '',
     firstName: '',
     lastName: '',
-    email: ''
+    email: '',
+    birthDate: ''
   })
   const [showAddUser, setShowAddUser] = useState(false)
   const navigate = useNavigate()
@@ -70,7 +71,8 @@ function AdminDashboard() {
         id: '',
         firstName: '',
         lastName: '',
-        email: ''
+        email: '',
+        birthDate: ''
       })
       setShowAddUser(false)
       loadData()
@@ -259,6 +261,13 @@ function AdminDashboard() {
                     placeholder="Email"
                     value={newUser.email}
                     onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Date de naissance (JJ/MM/AAAA)"
+                    value={newUser.birthDate}
+                    onChange={(e) => setNewUser({ ...newUser, birthDate: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
                   />
                   <button
