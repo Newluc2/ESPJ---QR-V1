@@ -1,5 +1,6 @@
 const COOKIE_NAME = 'espj_user_id'
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
+const BIRTH_DATE_PREFIX = 'espj_birth_date_'
 
 export const normalizeUserInput = (value = '') =>
   value
@@ -37,4 +38,28 @@ export const clearStoredUserId = () => {
   if (typeof document === 'undefined') return
 
   document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; samesite=lax`
+}
+
+export const normalizeBirthDate = (value = '') =>
+  value
+    .toString()
+    .trim()
+    .replace(/\D/g, '')
+
+export const getStoredBirthDate = (userId) => {
+  if (typeof window === 'undefined' || !userId) return null
+
+  return window.localStorage.getItem(`${BIRTH_DATE_PREFIX}${userId}`)
+}
+
+export const saveStoredBirthDate = (userId, birthDate) => {
+  if (typeof window === 'undefined' || !userId || !birthDate) return
+
+  window.localStorage.setItem(`${BIRTH_DATE_PREFIX}${userId}`, birthDate)
+}
+
+export const clearStoredBirthDate = (userId) => {
+  if (typeof window === 'undefined' || !userId) return
+
+  window.localStorage.removeItem(`${BIRTH_DATE_PREFIX}${userId}`)
 }

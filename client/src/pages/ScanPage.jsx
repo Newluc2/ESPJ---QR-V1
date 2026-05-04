@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { userService, attendanceService } from '../services/api'
 import { Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import {
+  clearStoredBirthDate,
+  getStoredBirthDate,
+  normalizeBirthDate,
+  saveStoredBirthDate,
+} from '../utils/userSession'
 
 function ScanPage() {
   const [searchParams] = useSearchParams()
@@ -54,16 +60,51 @@ function ScanPage() {
   const handleSubmit = async () => {
     if (!userId || submitted) return
 
+    const storedBirthDate = getStoredBirthDate(userId)
+    const normalizedStoredBirthDate = normalizeBirthDate(storedBirthDate || '')
+    const normalizedSheetBirthDate = normalizeBirthDate(user?.birthDate || '')
+
+    if (normalizedStoredBirthDate && normalizedStoredBirthDate === normalizedSheetBirthDate) {
+      await registerAttendance()
+      return
+    }
+
+    if (storedBirthDate && normalizedStoredBirthDate !== normalizedSheetBirthDate) {
+      clearStoredBirthDate(userId)
+    }
+
     setShowBirthDateModal(true)
     setBirthDateError('')
     setEnteredBirthDate('')
   }
 
+  const registerAttendance = async () => {
+    try {
+      setSubmitted(true)
+      const response = await attendanceService.register(userId)
+
+      setMessage({
+        type: 'success',
+        text: `${response.data.type} enregistrée à ${response.data.time}`
+      })
+
+      setTimeout(() => {
+        setMessage(null)
+        setSubmitted(false)
+      }, 3000)
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err.response?.data?.error || 'Erreur lors de l\'enregistrement'
+      })
+      setSubmitted(false)
+    }
+  }
+
   const handleConfirmBirthDate = async () => {
     // Normalize dates for comparison (remove all non-digit characters)
-    const normalizeDate = (date) => date?.replace(/\D/g, '') || ''
-    const storedDate = normalizeDate(user.birthDate)
-    const enteredDate = normalizeDate(enteredBirthDate)
+    const storedDate = normalizeBirthDate(user.birthDate)
+    const enteredDate = normalizeBirthDate(enteredBirthDate)
 
     if (!enteredDate) {
       setBirthDateError('Veuillez entrer votre date de naissance')
@@ -82,29 +123,11 @@ function ScanPage() {
     }
 
     // Date is correct, proceed with registration
+    saveStoredBirthDate(userId, enteredDate)
     setShowBirthDateModal(false)
     setBirthDateError('')
 
-    try {
-      setSubmitted(true)
-      const response = await attendanceService.register(userId)
-      
-      setMessage({
-        type: 'success',
-        text: `${response.data.type} enregistrée à ${response.data.time}`
-      })
-
-      setTimeout(() => {
-        setMessage(null)
-        setSubmitted(false)
-      }, 3000)
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.error || 'Erreur lors de l\'enregistrement'
-      })
-      setSubmitted(false)
-    }
+    await registerAttendance()
   }
 
   const handleCancelBirthDate = () => {
