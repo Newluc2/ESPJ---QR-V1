@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { adminService } from '../services/api'
-import { LogOut, Users, QrCode, RefreshCw, Download, Plus } from 'lucide-react'
+import { adminService, authService } from '../services/api'
+import { LogOut, Users, QrCode, RefreshCw, Download, Plus, Smartphone } from 'lucide-react'
+import sessionManager from '../utils/sessionManager'
 
 function AdminDashboard() {
   const [attendance, setAttendance] = useState([])
   const [users, setUsers] = useState([])
+  const [devices, setDevices] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState(null)
   const [showQR, setShowQR] = useState(false)
@@ -30,13 +32,15 @@ function AdminDashboard() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [attendanceRes, usersRes] = await Promise.all([
+      const [attendanceRes, usersRes, devicesRes] = await Promise.all([
         adminService.getTodayAttendance(),
-        adminService.getAllUsers()
+        adminService.getAllUsers(),
+        adminService.getConnectedDevices()
       ])
       
-      setAttendance(attendanceRes.data)
-      setUsers(usersRes.data)
+      setAttendance(attendanceRes.data.attendance || [])
+      setUsers(usersRes.data.users || [])
+      setDevices(devicesRes.data.devices || [])
     } catch (error) {
       console.error('Error loading data:', error)
       if (error.response?.status === 401) {
@@ -48,7 +52,13 @@ function AdminDashboard() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken')
+    const deviceToken = sessionManager.getDeviceToken()
+
+    if (deviceToken) {
+      authService.logout(deviceToken).catch(() => {})
+    }
+
+    sessionManager.clearSession()
     navigate('/admin/login')
   }
 
@@ -90,7 +100,7 @@ function AdminDashboard() {
     link.click()
   }
 
-  if (loading && attendance.length === 0 && users.length === 0) {
+  if (loading && attendance.length === 0 && users.length === 0 && devices.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -121,6 +131,55 @@ function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Connected Devices Section */}
+            <div className="bg-white rounded-lg shadow">
+              <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Smartphone size={24} />
+                  Appareils Connectés
+                </h2>
+                <button
+                  onClick={loadData}
+                  className="text-indigo-600 hover:text-indigo-700"
+                  title="Actualiser"
+                >
+                  <RefreshCw size={20} />
+                </button>
+              </div>
+
+              {devices.length === 0 ? (
+                <div className="px-6 py-8 text-center text-gray-500">
+                  Aucun appareil connecté
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Utilisateur</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Dernier Accès</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Connecté Depuis</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {devices.map((device) => (
+                        <tr key={device.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm font-semibold text-indigo-600">
+                            <span className="bg-indigo-50 px-3 py-1 rounded-full text-xs">
+                              Appareil {device.id}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900">{device.user}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{device.lastActivity}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600 text-xs">{device.createdAt}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
             {/* Attendance Section */}
             <div className="bg-white rounded-lg shadow">
               <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">

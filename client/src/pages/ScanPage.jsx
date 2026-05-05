@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { userService, attendanceService } from '../services/api'
-import { Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { userService, attendanceService, authService } from '../services/api'
+import { Clock, CheckCircle, AlertCircle, MoreVertical, LogOut, Power } from 'lucide-react'
 import {
   clearStoredBirthDate,
   getStoredBirthDate,
   normalizeBirthDate,
   saveStoredBirthDate,
 } from '../utils/userSession'
+import sessionManager from '../utils/sessionManager'
 
 function ScanPage() {
-  const [searchParams] = useSearchParams()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -20,8 +20,8 @@ function ScanPage() {
   const [showBirthDateModal, setShowBirthDateModal] = useState(false)
   const [enteredBirthDate, setEnteredBirthDate] = useState('')
   const [birthDateError, setBirthDateError] = useState('')
-
-  const userId = searchParams.get('userId')
+  const [showMenu, setShowMenu] = useState(false)
+  const navigate = useNavigate()
 
   // Update current time
   useEffect(() => {
@@ -38,16 +38,18 @@ function ScanPage() {
         setLoading(true)
         setError(null)
 
-        if (!userId) {
-          setError('ID utilisateur manquant')
+        const deviceToken = sessionManager.getDeviceToken()
+
+        if (!deviceToken) {
+          setError('Session expirée ou introuvable')
           setLoading(false)
           return
         }
 
-        const response = await userService.getUser(userId)
-        setUser(response.data)
+        const response = await userService.getMe()
+        setUser(response.data.user || response.data)
       } catch (err) {
-        setError('Utilisateur non trouvé')
+        setError('Impossible de charger votre profil')
         console.error(err)
       } finally {
         setLoading(false)
@@ -55,12 +57,14 @@ function ScanPage() {
     }
 
     loadUser()
-  }, [userId])
+  }, [])
+
+  const userKey = user?.email || (user ? `${user.firstName}_${user.lastName}` : '')
 
   const handleSubmit = async () => {
-    if (!userId || submitted) return
+    if (submitted) return
 
-    const storedBirthDate = getStoredBirthDate(userId)
+    const storedBirthDate = getStoredBirthDate(userKey)
     const normalizedStoredBirthDate = normalizeBirthDate(storedBirthDate || '')
     const normalizedSheetBirthDate = normalizeBirthDate(user?.birthDate || '')
 
@@ -70,7 +74,7 @@ function ScanPage() {
     }
 
     if (storedBirthDate && normalizedStoredBirthDate !== normalizedSheetBirthDate) {
-      clearStoredBirthDate(userId)
+      clearStoredBirthDate(userKey)
     }
 
     setShowBirthDateModal(true)
@@ -81,7 +85,13 @@ function ScanPage() {
   const registerAttendance = async () => {
     try {
       setSubmitted(true)
-      const response = await attendanceService.register(userId)
+      const deviceToken = sessionManager.getDeviceToken()
+
+      if (!deviceToken) {
+        throw new Error('Session introuvable')
+      }
+
+      const response = await attendanceService.register(deviceToken)
 
       setMessage({
         type: 'success',
@@ -123,7 +133,7 @@ function ScanPage() {
     }
 
     // Date is correct, proceed with registration
-    saveStoredBirthDate(userId, enteredDate)
+    saveStoredBirthDate(userKey, enteredDate)
     setShowBirthDateModal(false)
     setBirthDateError('')
 
@@ -134,6 +144,65 @@ function ScanPage() {
     setShowBirthDateModal(false)
     setBirthDateError('')
     setEnteredBirthDate('')
+  }
+
+  const handleLogout = async () => {
+    try {
+      const deviceToken = sessionManager.getDeviceToken()
+      if (deviceToken) {
+        await authService.logout(deviceToken).catch(() => {})
+      }
+      sessionManager.clearSession()
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Logout error:', error)
+      sessionManager.clearSession()
+      navigate('/', { replace: true })
+    }
+  }
+
+  const handleUnpair = async () => {
+    try {
+      const deviceToken = sessionManager.getDeviceToken()
+      if (!deviceToken) {
+        sessionManager.clearSession()
+        navigate('/', { replace: true })
+        return
+      }
+
+      // Invalider l'appareil du côté serveur
+      await authService.logout(deviceToken).catch(() => {})
+      
+      // Effacer la session locale
+      sessionManager.clearSession()
+      
+      // Retourner au login
+      navigate('/', { replace: true })
+    } catch (error) {
+      console.error('Unpair error:', error)
+      sessionManager.clearSession()
+      navigate('/', { replace: true })
+    }
+  }
+
+  if (error && !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center">
+            <AlertCircle className="mx-auto mb-4 text-red-600" size={48} />
+            <h2 className="text-2xl font-bold text-red-600 mb-2">Erreur</h2>
+            <p className="text-red-700 text-lg">{error}</p>
+            <button
+              onClick={() => navigate('/')}
+              className="mt-6 inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700"
+            >
+              Retour à l'accueil
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -149,6 +218,45 @@ function ScanPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      {/* Menu Button - Top Left */}
+      <div className="absolute top-4 left-4">
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-2 hover:bg-white/50 rounded-full transition"
+            title="Options"
+          >
+            <MoreVertical size={24} className="text-slate-700" />
+          </button>
+          
+          {/* Dropdown Menu */}
+          {showMenu && (
+            <div className="absolute top-12 left-0 bg-white rounded-lg shadow-xl border border-slate-200 overflow-hidden min-w-max z-50">
+              <button
+                onClick={() => {
+                  handleLogout()
+                  setShowMenu(false)
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-slate-50 text-slate-700 font-medium flex items-center gap-2 border-b border-slate-100"
+              >
+                <LogOut size={18} />
+                Déconnexion
+              </button>
+              <button
+                onClick={() => {
+                  handleUnpair()
+                  setShowMenu(false)
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 font-medium flex items-center gap-2"
+              >
+                <Power size={18} />
+                Dépareiller
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="max-w-md w-full">
         {error ? (
           <div className="bg-red-50 border-2 border-red-200 rounded-lg p-8 text-center">

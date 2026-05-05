@@ -1,50 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, UserCircle2, Loader2, Search } from 'lucide-react'
-import { userService } from '../services/api'
-import { normalizeUserInput } from '../utils/userSession'
+import { ArrowRight, Loader2, ShieldCheck, UserCircle2 } from 'lucide-react'
+import { authService } from '../services/api'
+import sessionManager from '../utils/sessionManager'
 
 function HomePage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [users, setUsers] = useState([])
-  const [loadingUsers, setLoadingUsers] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        setLoadingUsers(true)
-        const response = await userService.getAllUsers()
-        setUsers(response.data || [])
-      } catch (err) {
-        console.error('Error loading users:', err)
-        setError('Impossible de charger la liste des jeunes')
-      } finally {
-        setLoadingUsers(false)
-      }
-    }
-
-    loadUsers()
+    // Device name is now generated server-side from IP
   }, [])
-
-  const matchedUser = useMemo(() => {
-    const normalizedFirstName = normalizeUserInput(firstName)
-    const normalizedLastName = normalizeUserInput(lastName)
-
-    if (!normalizedFirstName || !normalizedLastName) {
-      return null
-    }
-
-    return users.find((user) => {
-      return (
-        normalizeUserInput(user.firstName) === normalizedFirstName &&
-        normalizeUserInput(user.lastName) === normalizedLastName
-      )
-    }) || null
-  }, [firstName, lastName, users])
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -54,21 +23,25 @@ function HomePage() {
       return
     }
 
-    if (!matchedUser) {
-      setError('Aucun jeune trouvé avec ce nom et ce prénom')
-      return
-    }
-
-    const userId = matchedUser.id || matchedUser.userId
-
-    if (!userId) {
-      setError('Utilisateur trouvé, mais ID introuvable')
-      return
-    }
-
     setSubmitting(true)
     setError('')
-    navigate(`/scan?userId=${encodeURIComponent(userId)}`)
+
+    try {
+      const response = await authService.login(
+        firstName.trim(),
+        lastName.trim()
+      )
+
+      const { deviceToken, user, expiresAt } = response.data
+      sessionManager.saveSession(deviceToken, user, expiresAt)
+
+      navigate('/scan')
+    } catch (err) {
+      console.error('Login error:', err)
+      setError(err.response?.data?.error || 'Connexion impossible, vérifiez vos informations')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -79,9 +52,9 @@ function HomePage() {
             <div className="w-16 h-16 mx-auto rounded-full bg-indigo-100 flex items-center justify-center mb-4">
               <UserCircle2 className="text-indigo-700" size={34} />
             </div>
-            <h1 className="text-3xl font-bold text-slate-900">Bienvenue</h1>
+            <h1 className="text-3xl font-bold text-slate-900">Connexion sécurisée</h1>
             <p className="text-slate-600 mt-2">
-              Entrez votre nom et votre prénom pour accéder à la page de pointage.
+              Saisissez votre prénom et votre nom pour créer une session chiffrée. Votre appareil sera identifié automatiquement.
             </p>
           </div>
 
@@ -98,7 +71,7 @@ function HomePage() {
                 placeholder="Votre prénom"
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                 autoComplete="given-name"
-                disabled={loadingUsers || submitting}
+                disabled={submitting}
               />
             </div>
 
@@ -114,7 +87,7 @@ function HomePage() {
                 placeholder="Votre nom"
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
                 autoComplete="family-name"
-                disabled={loadingUsers || submitting}
+                disabled={submitting}
               />
             </div>
 
@@ -126,17 +99,17 @@ function HomePage() {
 
             <button
               type="submit"
-              disabled={loadingUsers || submitting}
+              disabled={submitting}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:bg-indigo-400"
             >
-              {loadingUsers || submitting ? (
+              {submitting ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Recherche...
+                  Connexion...
                 </>
               ) : (
                 <>
-                  Accéder au scan
+                  Se connecter
                   <ArrowRight size={18} />
                 </>
               )}
@@ -144,9 +117,9 @@ function HomePage() {
           </form>
 
           <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 flex items-start gap-3">
-            <Search size={18} className="mt-0.5 text-indigo-600 flex-shrink-0" />
+            <ShieldCheck size={18} className="mt-0.5 text-indigo-600 flex-shrink-0" />
             <p>
-              Si votre compte existe déjà, vous serez redirigé vers la page de scan avec votre identifiant.
+              La session est enregistrée localement avec un deviceToken, sans exposer votre identifiant.
             </p>
           </div>
         </div>

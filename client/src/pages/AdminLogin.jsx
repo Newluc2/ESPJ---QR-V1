@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { authService } from '../services/api'
+import axios from 'axios'
 import { Lock, AlertCircle } from 'lucide-react'
+import sessionManager from '../utils/sessionManager'
 
 function AdminLogin() {
   const [password, setPassword] = useState('')
@@ -13,7 +14,7 @@ function AdminLogin() {
     e.preventDefault()
     
     if (!password.trim()) {
-      setError('Veuillez entrer un mot de passe')
+      setError('Veuillez entrer le mot de passe admin')
       return
     }
 
@@ -21,21 +22,23 @@ function AdminLogin() {
       setLoading(true)
       setError('')
 
-      const response = await authService.login(password)
+      const response = await axios.post('/api/auth/admin-login', {
+        password: password.trim()
+      })
       
-      // Save token
-      localStorage.setItem('adminToken', response.data.token)
+      const { deviceToken, user, expiresAt } = response.data
+      sessionManager.saveSession(deviceToken, user, expiresAt)
       
       navigate('/admin')
     } catch (err) {
-      setError(err.response?.data?.error || 'Mot de passe incorrect')
+      setError(err.response?.data?.error || 'Mot de passe incorrect ou erreur de connexion')
     } finally {
       setLoading(false)
     }
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken')
+    sessionManager.clearSession()
     setPassword('')
   }
 
@@ -49,22 +52,21 @@ function AdminLogin() {
               <Lock className="text-indigo-600" size={32} />
             </div>
             <h1 className="text-3xl font-bold text-gray-800">Admin Panel</h1>
-            <p className="text-gray-500 text-sm mt-2">Authentification requise</p>
+            <p className="text-gray-500 text-sm mt-2">Accès administrateur sécurisé avec mot de passe</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Password Input */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Mot de passe
+                Mot de passe admin
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                placeholder="Entrez le mot de passe admin"
+                placeholder="Entrez le mot de passe"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent disabled:bg-gray-100"
               />
             </div>
@@ -83,7 +85,7 @@ function AdminLogin() {
               disabled={loading}
               className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
             >
-              {loading ? 'Vérification...' : 'Se connecter'}
+              {loading ? 'Connexion...' : 'Se connecter'}
             </button>
           </form>
 

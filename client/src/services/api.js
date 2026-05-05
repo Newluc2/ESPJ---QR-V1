@@ -1,4 +1,5 @@
 import axios from 'axios'
+import sessionManager from '../utils/sessionManager'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
@@ -7,37 +8,62 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 })
 
-// Add token to requests if it exists
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('adminToken')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  const deviceToken = localStorage.getItem('deviceToken')
+  if (deviceToken) {
+    config.headers.Authorization = `Bearer ${deviceToken}`
   }
   return config
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      sessionManager.clearSession()
+      localStorage.removeItem('adminToken')
+
+      const isAdminRoute = window.location.pathname.startsWith('/admin')
+      const targetPath = isAdminRoute ? '/admin/login' : '/'
+
+      if (window.location.pathname !== targetPath) {
+        window.location.href = targetPath
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 export const authService = {
-  login: (password) => api.post('/auth/login', { password }),
-  verify: (token) => api.post('/auth/verify', { token }),
+  login: (firstName, lastName, deviceName) =>
+    api.post('/auth/login', { firstName, lastName, deviceName }),
+  verify: (deviceToken) =>
+    api.post('/auth/verify', { deviceToken }),
+  logout: (deviceToken) =>
+    api.post('/auth/logout', { deviceToken }),
 }
 
 export const userService = {
-  getUser: (userId) => api.get(`/users/${userId}`),
-  getAllUsers: () => api.get('/users'),
+  getMe: () => api.get('/users/me'),
 }
 
 export const attendanceService = {
-  register: (userId) => api.post('/attendance/register', { userId }),
-  getTodayAttendance: (userId) => api.get(`/attendance/today/${userId}`),
+  register: (deviceToken) =>
+    api.post('/attendance/register', { deviceToken }),
+  getTodayAttendance: () =>
+    api.post('/attendance/today'),
 }
 
 export const adminService = {
   getTodayAttendance: () => api.get('/admin/attendance/today'),
   getAllUsers: () => api.get('/admin/users'),
-  generateQRCode: (userId) => api.get(`/admin/qrcode/${userId}`),
+  getConnectedDevices: () => api.get('/admin/devices'),
+  generateQRCode: (userId) => api.post('/admin/qrcode', { userId }),
   addUser: (userData) => api.post('/admin/users', userData),
+  getSessions: () => api.get('/admin/sessions'),
 }
 
 export default api

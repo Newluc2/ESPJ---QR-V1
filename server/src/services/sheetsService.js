@@ -165,6 +165,51 @@ class SheetsService {
     }
   }
 
+  async findUserByName(firstName, lastName) {
+    try {
+      const sheet = await this.getOrCreateSheet('Utilisateurs');
+      await sheet.loadHeaderRow();
+      const rows = await sheet.getRows();
+
+      const user = rows.find(row => {
+        const rowFirstName = (row.get('Prénom') || row['Prénom'] || row.Prénom || '').trim();
+        const rowLastName = (row.get('Nom') || row['Nom'] || row.Nom || '').trim();
+    
+        // Comparaison insensible à la casse
+        return (
+          rowFirstName.toLowerCase() === firstName.toLowerCase() &&
+          rowLastName.toLowerCase() === lastName.toLowerCase()
+        );
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      return {
+        id: user.get('Id') || user.get('ID') || user.Id || user.ID || user['Id'] || user['ID'],
+        firstName: user.get('Prénom') || user['Prénom'] || user.Prénom,
+        lastName: user.get('Nom') || user['Nom'] || user.Nom,
+        email: user.get('Email') || user['Email'] || user.Email || '',
+        birthDate: this.getFieldValue(user, [
+          'Date de naissance',
+          'Date de Naissance',
+          'DateNaissance',
+          'Date de naissance ',
+          'Date de Naissance '
+        ])
+      };
+    } catch (error) {
+      console.error('Error finding user by name:', error);
+      return null;
+    }
+  }
+
+  async userExists(firstName, lastName) {
+    const user = await this.findUserByName(firstName, lastName);
+    return !!user;
+  }
+
   async getUserData(userId) {
     try {
       const sheet = await this.getOrCreateSheet('Utilisateurs');
