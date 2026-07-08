@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authService } from '../services/api'
-import { Lock, AlertCircle } from 'lucide-react'
+import { Lock, AlertCircle, RotateCcw } from 'lucide-react'
+import { clearStoredUserSession } from '../utils/userSession'
 
 function AdminLogin() {
   const [password, setPassword] = useState('')
@@ -37,6 +38,11 @@ function AdminLogin() {
   const handleLogout = () => {
     localStorage.removeItem('adminToken')
     setPassword('')
+  }
+
+  const handleClearSession = () => {
+    clearStoredUserSession()
+    setError('Session utilisateur effacée')
   }
 
   return (
@@ -86,6 +92,15 @@ function AdminLogin() {
               {loading ? 'Vérification...' : 'Se connecter'}
             </button>
           </form>
+
+          <button
+            type="button"
+            onClick={handleClearSession}
+            className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition duration-200"
+          >
+            <RotateCcw size={16} />
+            Vider la session utilisateur
+          </button>
 
           {/* Footer */}
           <div className="text-center text-xs text-gray-500 mt-6 pt-6 border-t border-gray-200">

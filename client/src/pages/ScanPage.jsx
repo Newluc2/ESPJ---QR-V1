@@ -5,7 +5,7 @@ import { Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import {
   clearStoredBirthDate,
   getStoredBirthDate,
-  normalizeBirthDate,
+  normalizeBirthDateInput,
   saveStoredBirthDate,
 } from '../utils/userSession'
 
@@ -22,6 +22,29 @@ function ScanPage() {
   const [birthDateError, setBirthDateError] = useState('')
 
   const userId = searchParams.get('userId')
+
+  const registerAttendance = async () => {
+    try {
+      setSubmitted(true)
+      const response = await attendanceService.register(userId)
+
+      setMessage({
+        type: 'success',
+        text: `${response.data.type} enregistrée à ${response.data.time}`
+      })
+
+      setTimeout(() => {
+        setMessage(null)
+        setSubmitted(false)
+      }, 3000)
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err.response?.data?.error || 'Erreur lors de l\'enregistrement'
+      })
+      setSubmitted(false)
+    }
+  }
 
   // Update current time
   useEffect(() => {
@@ -61,8 +84,8 @@ function ScanPage() {
     if (!userId || submitted) return
 
     const storedBirthDate = getStoredBirthDate(userId)
-    const normalizedStoredBirthDate = normalizeBirthDate(storedBirthDate || '')
-    const normalizedSheetBirthDate = normalizeBirthDate(user?.birthDate || '')
+    const normalizedStoredBirthDate = normalizeBirthDateInput(storedBirthDate)
+    const normalizedSheetBirthDate = normalizeBirthDateInput(user?.birthDate)
 
     if (normalizedStoredBirthDate && normalizedStoredBirthDate === normalizedSheetBirthDate) {
       await registerAttendance()
@@ -75,36 +98,13 @@ function ScanPage() {
 
     setShowBirthDateModal(true)
     setBirthDateError('')
-    setEnteredBirthDate('')
-  }
-
-  const registerAttendance = async () => {
-    try {
-      setSubmitted(true)
-      const response = await attendanceService.register(userId)
-
-      setMessage({
-        type: 'success',
-        text: `${response.data.type} enregistrée à ${response.data.time}`
-      })
-
-      setTimeout(() => {
-        setMessage(null)
-        setSubmitted(false)
-      }, 3000)
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.error || 'Erreur lors de l\'enregistrement'
-      })
-      setSubmitted(false)
-    }
+    setEnteredBirthDate(storedBirthDate || '')
   }
 
   const handleConfirmBirthDate = async () => {
     // Normalize dates for comparison (remove all non-digit characters)
-    const storedDate = normalizeBirthDate(user.birthDate)
-    const enteredDate = normalizeBirthDate(enteredBirthDate)
+    const storedDate = normalizeBirthDateInput(user.birthDate)
+    const enteredDate = normalizeBirthDateInput(enteredBirthDate)
 
     if (!enteredDate) {
       setBirthDateError('Veuillez entrer votre date de naissance')
@@ -128,6 +128,7 @@ function ScanPage() {
     setBirthDateError('')
 
     await registerAttendance()
+    saveStoredBirthDate(userId, enteredBirthDate)
   }
 
   const handleCancelBirthDate = () => {
@@ -195,6 +196,7 @@ function ScanPage() {
 
               {/* Submit Button */}
               <button
+                type="button"
                 onClick={handleSubmit}
                 disabled={submitted}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3 px-6 rounded-lg transition duration-200 text-lg mb-4"
@@ -267,12 +269,14 @@ function ScanPage() {
 
                     <div className="flex gap-3 pt-1">
                       <button
+                        type="button"
                         onClick={handleConfirmBirthDate}
                         className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200"
                       >
                         Confirmer
                       </button>
                       <button
+                        type="button"
                         onClick={handleCancelBirthDate}
                         className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition duration-200"
                       >

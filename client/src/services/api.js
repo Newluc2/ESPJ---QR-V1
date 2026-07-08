@@ -36,7 +36,6 @@ export const attendanceService = {
 export const adminService = {
   getTodayAttendance: () => api.get('/admin/attendance/today'),
   getAllUsers: () => api.get('/admin/users'),
-  generateQRCode: (userId) => api.get(`/admin/qrcode/${userId}`),
   addUser: (userData) => api.post('/admin/users', userData),
 }
 

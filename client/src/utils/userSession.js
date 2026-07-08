@@ -3,7 +3,7 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 const BIRTH_DATE_PREFIX = 'espj_birth_date_'
 
 export const normalizeUserInput = (value = '') =>
-  value
+  (value ?? '')
     .toString()
     .trim()
     .toLowerCase()
@@ -34,32 +34,48 @@ export const saveStoredUserId = (userId) => {
   setCookie(COOKIE_NAME, userId)
 }
 
+export const normalizeBirthDateInput = (value = '') =>
+  (value ?? '')
+    .toString()
+    .trim()
+    .replace(/\D/g, '')
+
+export const normalizeBirthDate = normalizeBirthDateInput
+
+export const getStoredBirthDate = (userId) => {
+  if (!userId) return null
+
+  return getCookie(`${BIRTH_DATE_PREFIX}${userId}`)
+}
+
+export const saveStoredBirthDate = (userId, birthDate) => {
+  if (!userId || !birthDate) return
+
+  setCookie(`${BIRTH_DATE_PREFIX}${userId}`, birthDate)
+}
+
+export const clearStoredBirthDate = (userId) => {
+  if (!userId || typeof document === 'undefined') return
+
+  document.cookie = `${BIRTH_DATE_PREFIX}${userId}=; path=/; max-age=0; samesite=lax`
+}
+
 export const clearStoredUserId = () => {
   if (typeof document === 'undefined') return
 
   document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; samesite=lax`
 }
 
-export const normalizeBirthDate = (value = '') =>
-  value
-    .toString()
-    .trim()
-    .replace(/\D/g, '')
+export const clearStoredUserSession = () => {
+  if (typeof document === 'undefined') return
 
-export const getStoredBirthDate = (userId) => {
-  if (typeof window === 'undefined' || !userId) return null
+  clearStoredUserId()
 
-  return window.localStorage.getItem(`${BIRTH_DATE_PREFIX}${userId}`)
-}
-
-export const saveStoredBirthDate = (userId, birthDate) => {
-  if (typeof window === 'undefined' || !userId || !birthDate) return
-
-  window.localStorage.setItem(`${BIRTH_DATE_PREFIX}${userId}`, birthDate)
-}
-
-export const clearStoredBirthDate = (userId) => {
-  if (typeof window === 'undefined' || !userId) return
-
-  window.localStorage.removeItem(`${BIRTH_DATE_PREFIX}${userId}`)
+  document.cookie
+    .split('; ')
+    .filter((cookie) => cookie.startsWith(BIRTH_DATE_PREFIX))
+    .forEach((cookie) => {
+      const cookieName = cookie.split('=')[0]
+      document.cookie = `${cookieName}=; path=/; max-age=0; samesite=lax`
+    })
 }
