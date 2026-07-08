@@ -20,13 +20,14 @@ function ScanPage() {
   const [showBirthDateModal, setShowBirthDateModal] = useState(false)
   const [enteredBirthDate, setEnteredBirthDate] = useState('')
   const [birthDateError, setBirthDateError] = useState('')
+  const [pendingAttendanceTimestamp, setPendingAttendanceTimestamp] = useState(null)
 
   const userId = searchParams.get('userId')
 
-  const registerAttendance = async () => {
+  const registerAttendance = async (clientTimestamp = pendingAttendanceTimestamp) => {
     try {
       setSubmitted(true)
-      const response = await attendanceService.register(userId)
+      const response = await attendanceService.register(userId, clientTimestamp)
 
       setMessage({
         type: 'success',
@@ -82,12 +83,16 @@ function ScanPage() {
   const handleSubmit = async () => {
     if (!userId || submitted) return
 
+    const validationTimestamp = new Date().toISOString()
+    setPendingAttendanceTimestamp(validationTimestamp)
+
     const storedBirthDate = getStoredBirthDate(userId)
     const normalizedStoredBirthDate = normalizeBirthDate(storedBirthDate || '')
     const normalizedSheetBirthDate = normalizeBirthDate(user?.birthDate || '')
 
     if (normalizedStoredBirthDate && normalizedStoredBirthDate === normalizedSheetBirthDate) {
-      await registerAttendance()
+      await registerAttendance(validationTimestamp)
+      setPendingAttendanceTimestamp(null)
       return
     }
 
@@ -124,13 +129,15 @@ function ScanPage() {
     setShowBirthDateModal(false)
     setBirthDateError('')
 
-    await registerAttendance()
+    await registerAttendance(pendingAttendanceTimestamp)
+    setPendingAttendanceTimestamp(null)
   }
 
   const handleCancelBirthDate = () => {
     setShowBirthDateModal(false)
     setBirthDateError('')
     setEnteredBirthDate('')
+    setPendingAttendanceTimestamp(null)
   }
 
   if (loading) {

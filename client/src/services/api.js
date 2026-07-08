@@ -29,7 +29,7 @@ export const userService = {
 }
 
 export const attendanceService = {
-  register: (userId) => api.post('/attendance/register', { userId }),
+  register: (userId, clientTimestamp) => api.post('/attendance/register', { userId, clientTimestamp }),
   getTodayAttendance: (userId) => api.get(`/attendance/today/${userId}`),
 }
 

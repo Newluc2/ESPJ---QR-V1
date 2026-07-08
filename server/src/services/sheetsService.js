@@ -8,7 +8,15 @@ class SheetsService {
   }
 
   getTodaySheetTitle(date = new Date()) {
-    return date.toLocaleDateString('fr-FR');
+    return date.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });
+  }
+
+  getParisTime(date = new Date()) {
+    return new Date(date).toLocaleTimeString('fr-FR', {
+      timeZone: 'Europe/Paris',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   getFieldValue(source, keys) {
@@ -70,9 +78,10 @@ class SheetsService {
     return this.getOrCreateSheet(this.getTodaySheetTitle());
   }
 
-  async addOrUpdateAttendance(userId, userData, type) {
+  async addOrUpdateAttendance(userId, userData, type, clientTimestamp = null) {
     try {
-      const today = this.getTodaySheetTitle();
+      const currentDate = clientTimestamp ? new Date(clientTimestamp) : new Date();
+      const today = this.getTodaySheetTitle(currentDate);
       const sheet = await this.getTodayAttendanceSheet();
       
       await sheet.loadHeaderRow();
@@ -83,7 +92,7 @@ class SheetsService {
         (row.get('Heure Sortie') === '-' || row.get('Heure Sortie') === '')
       );
 
-      const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const now = this.getParisTime(currentDate);
 
       if (!userRow && type === 'arrival') {
         // Créer une nouvelle ligne pour l'arrivée

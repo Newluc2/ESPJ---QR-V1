@@ -6,7 +6,7 @@ const router = express.Router();
 // Register attendance (arrival or departure)
 router.post('/register', async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { userId, clientTimestamp } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: 'User ID required' });
@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
     let attendanceType = existingRecord ? 'departure' : 'arrival';
 
     // Add or update attendance
-    const result = await sheetsService.addOrUpdateAttendance(userId, user, attendanceType);
+    const result = await sheetsService.addOrUpdateAttendance(userId, user, attendanceType, clientTimestamp);
 
     res.json(result);
   } catch (error) {
