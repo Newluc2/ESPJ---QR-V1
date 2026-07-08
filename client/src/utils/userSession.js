@@ -34,32 +34,6 @@ export const saveStoredUserId = (userId) => {
   setCookie(COOKIE_NAME, userId)
 }
 
-export const normalizeBirthDateInput = (value = '') =>
-  (value ?? '')
-    .toString()
-    .trim()
-    .replace(/\D/g, '')
-
-export const normalizeBirthDate = normalizeBirthDateInput
-
-export const getStoredBirthDate = (userId) => {
-  if (!userId) return null
-
-  return getCookie(`${BIRTH_DATE_STORAGE_PREFIX}${userId}`)
-}
-
-export const saveStoredBirthDate = (userId, birthDate) => {
-  if (!userId || !birthDate) return
-
-  setCookie(`${BIRTH_DATE_STORAGE_PREFIX}${userId}`, birthDate)
-}
-
-export const clearStoredBirthDate = (userId) => {
-  if (!userId || typeof document === 'undefined') return
-
-  document.cookie = `${BIRTH_DATE_STORAGE_PREFIX}${userId}=; path=/; max-age=0; samesite=lax`
-}
-
 export const clearStoredUserId = () => {
   if (typeof document === 'undefined') return
 

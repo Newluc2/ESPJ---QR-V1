@@ -2,12 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { userService, attendanceService } from '../services/api'
 import { Clock, CheckCircle, AlertCircle } from 'lucide-react'
-import {
-  clearStoredBirthDate,
-  getStoredBirthDate,
-  normalizeBirthDate,
-  saveStoredBirthDate,
-} from '../utils/userSession'
 
 function ScanPage() {
   const [searchParams] = useSearchParams()
@@ -17,14 +11,10 @@ function ScanPage() {
   const [message, setMessage] = useState(null)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [submitted, setSubmitted] = useState(false)
-  const [showBirthDateModal, setShowBirthDateModal] = useState(false)
-  const [enteredBirthDate, setEnteredBirthDate] = useState('')
-  const [birthDateError, setBirthDateError] = useState('')
-  const [pendingAttendanceTimestamp, setPendingAttendanceTimestamp] = useState(null)
 
   const userId = searchParams.get('userId')
 
-  const registerAttendance = async (clientTimestamp = pendingAttendanceTimestamp) => {
+  const registerAttendance = async (clientTimestamp = new Date().toISOString()) => {
     try {
       setSubmitted(true)
       const response = await attendanceService.register(userId, clientTimestamp)
@@ -84,60 +74,8 @@ function ScanPage() {
     if (!userId || submitted) return
 
     const validationTimestamp = new Date().toISOString()
-    setPendingAttendanceTimestamp(validationTimestamp)
 
-    const storedBirthDate = getStoredBirthDate(userId)
-    const normalizedStoredBirthDate = normalizeBirthDate(storedBirthDate || '')
-    const normalizedSheetBirthDate = normalizeBirthDate(user?.birthDate || '')
-
-    if (normalizedStoredBirthDate && normalizedStoredBirthDate === normalizedSheetBirthDate) {
-      await registerAttendance(validationTimestamp)
-      setPendingAttendanceTimestamp(null)
-      return
-    }
-
-    if (storedBirthDate && normalizedStoredBirthDate !== normalizedSheetBirthDate) {
-      clearStoredBirthDate(userId)
-    }
-
-    setShowBirthDateModal(true)
-    setBirthDateError('')
-    setEnteredBirthDate(storedBirthDate || '')
-  }
-
-  const handleConfirmBirthDate = async () => {
-    const storedDate = normalizeBirthDate(user.birthDate)
-    const enteredDate = normalizeBirthDate(enteredBirthDate)
-
-    if (!enteredDate) {
-      setBirthDateError('Veuillez entrer votre date de naissance')
-      return
-    }
-
-    if (!storedDate) {
-      setBirthDateError('La date de naissance n\'est pas configurée pour ce compte')
-      return
-    }
-
-    if (storedDate !== enteredDate) {
-      setBirthDateError('Date de naissance incorrecte')
-      setEnteredBirthDate('')
-      return
-    }
-
-    saveStoredBirthDate(userId, enteredBirthDate)
-    setShowBirthDateModal(false)
-    setBirthDateError('')
-
-    await registerAttendance(pendingAttendanceTimestamp)
-    setPendingAttendanceTimestamp(null)
-  }
-
-  const handleCancelBirthDate = () => {
-    setShowBirthDateModal(false)
-    setBirthDateError('')
-    setEnteredBirthDate('')
-    setPendingAttendanceTimestamp(null)
+    await registerAttendance(validationTimestamp)
   }
 
   if (loading) {
@@ -227,63 +165,6 @@ function ScanPage() {
               </div>
             </div>
 
-            {showBirthDateModal && (
-              <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-start justify-center p-4 pt-8">
-                <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-indigo-100 overflow-hidden">
-                  <div className="bg-indigo-600 px-5 py-4 text-white">
-                    <p className="text-xs font-semibold uppercase tracking-wider opacity-90">Notification de sécurité</p>
-                    <h2 className="text-xl font-bold mt-1">Confirmer la date de naissance</h2>
-                  </div>
-
-                  <div className="p-5 space-y-4">
-                    <p className="text-gray-600 text-sm leading-6">
-                      Entrez votre date de naissance pour confirmer que c'est bien vous.
-                    </p>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Date de naissance au format JJ/MM/AAAA
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="01/01/2000"
-                        value={enteredBirthDate}
-                        onChange={(e) => {
-                          setEnteredBirthDate(e.target.value)
-                          setBirthDateError('')
-                        }}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-lg tracking-wide"
-                        maxLength="10"
-                        autoFocus
-                      />
-                    </div>
-
-                    {birthDateError && (
-                      <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-700 text-sm">
-                        {birthDateError}
-                      </div>
-                    )}
-
-                    <div className="flex gap-3 pt-1">
-                      <button
-                        type="button"
-                        onClick={handleConfirmBirthDate}
-                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition duration-200"
-                      >
-                        Confirmer
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCancelBirthDate}
-                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-xl transition duration-200"
-                      >
-                        Annuler
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         ) : null}
       </div>

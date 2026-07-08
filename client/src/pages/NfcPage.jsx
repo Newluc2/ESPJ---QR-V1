@@ -1,29 +1,20 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShieldCheck, Loader2, Smartphone, ArrowRight, CalendarDays } from 'lucide-react'
-import { getStoredBirthDate, getStoredUserId, normalizeBirthDateInput, saveStoredBirthDate, saveStoredUserId } from '../utils/userSession'
+import { ShieldCheck, Loader2, Smartphone, ArrowRight } from 'lucide-react'
+import { getStoredUserId, saveStoredUserId } from '../utils/userSession'
 
 function NfcPage() {
   const [userId, setUserId] = useState('')
-  const [birthDate, setBirthDate] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     const storedUserId = getStoredUserId()
-    const storedBirthDate = storedUserId ? getStoredBirthDate(storedUserId) : null
 
     if (storedUserId) {
       setUserId(storedUserId)
-      setBirthDate(storedBirthDate || '')
-
-      if (storedBirthDate) {
-        navigate(`/scan?userId=${encodeURIComponent(storedUserId)}`, { replace: true })
-      }
-    } else {
-      setUserId('')
-      setBirthDate('')
+      navigate(`/scan?userId=${encodeURIComponent(storedUserId)}`, { replace: true })
     }
   }, [navigate])
 
@@ -31,21 +22,14 @@ function NfcPage() {
     event.preventDefault()
 
     const trimmedUserId = userId.trim()
-    const trimmedBirthDate = birthDate.trim()
 
     if (!trimmedUserId) {
       setError('Veuillez entrer votre UserID')
       return
     }
 
-    if (!normalizeBirthDateInput(trimmedBirthDate)) {
-      setError('Veuillez entrer votre date de naissance')
-      return
-    }
-
     setSaving(true)
     saveStoredUserId(trimmedUserId)
-    saveStoredBirthDate(trimmedUserId, trimmedBirthDate)
     navigate(`/scan?userId=${encodeURIComponent(trimmedUserId)}`, { replace: true })
   }
 
@@ -78,26 +62,6 @@ function NfcPage() {
                 autoComplete="off"
                 disabled={saving}
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Date de naissance</label>
-              <div className="relative">
-                <CalendarDays size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={birthDate}
-                  onChange={(event) => {
-                    setBirthDate(event.target.value)
-                    setError('')
-                  }}
-                  placeholder="JJ/MM/AAAA"
-                  className="w-full rounded-xl border border-slate-300 pl-11 pr-4 py-3 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-100"
-                  autoComplete="off"
-                  disabled={saving}
-                  maxLength="10"
-                />
-              </div>
             </div>
 
             {error && (
