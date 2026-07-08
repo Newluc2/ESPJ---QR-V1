@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminService } from '../services/api'
-import { LogOut, Users, QrCode, RefreshCw, Download, Plus } from 'lucide-react'
+import { LogOut, Users, RefreshCw, Plus, ExternalLink } from 'lucide-react'
 
 function AdminDashboard() {
   const [attendance, setAttendance] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedUser, setSelectedUser] = useState(null)
-  const [showQR, setShowQR] = useState(false)
-  const [qrCode, setQrCode] = useState(null)
   const [newUser, setNewUser] = useState({
     id: '',
     firstName: '',
@@ -52,15 +49,8 @@ function AdminDashboard() {
     navigate('/admin/login')
   }
 
-  const handleGenerateQR = async (userId) => {
-    try {
-      const response = await adminService.generateQRCode(userId)
-      setQrCode(response.data)
-      setSelectedUser(userId)
-      setShowQR(true)
-    } catch (error) {
-      console.error('Error generating QR code:', error)
-    }
+  const handleOpenUserPage = (userId) => {
+    navigate(`/scan?userId=${encodeURIComponent(userId)}`)
   }
 
   const handleAddUser = async (e) => {
@@ -79,15 +69,6 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error adding user:', error)
     }
-  }
-
-  const downloadQRCode = () => {
-    if (!qrCode) return
-    
-    const link = document.createElement('a')
-    link.href = qrCode.qrCode
-    link.download = `qrcode-${qrCode.userId}.png`
-    link.click()
   }
 
   if (loading && attendance.length === 0 && users.length === 0) {
@@ -192,38 +173,6 @@ function AdminDashboard() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* QR Code Display */}
-            {showQR && qrCode && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <QrCode size={20} />
-                  Code QR
-                </h3>
-                <div className="flex flex-col items-center">
-                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                    <img 
-                      src={qrCode.qrCode} 
-                      alt="QR Code" 
-                      className="w-48 h-48"
-                    />
-                  </div>
-                  <button
-                    onClick={downloadQRCode}
-                    className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition"
-                  >
-                    <Download size={20} />
-                    Télécharger
-                  </button>
-                  <button
-                    onClick={() => setShowQR(false)}
-                    className="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition"
-                  >
-                    Fermer
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* Add User Form */}
             {showAddUser && (
               <div className="bg-white rounded-lg shadow p-6">
@@ -314,10 +263,11 @@ function AdminDashboard() {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleGenerateQR(user.id)}
-                        className="w-full text-sm bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-semibold py-1 px-2 rounded transition"
+                        onClick={() => handleOpenUserPage(user.id)}
+                        className="w-full text-sm inline-flex items-center justify-center gap-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-semibold py-1 px-2 rounded transition"
                       >
-                        Générer QR
+                        <ExternalLink size={16} />
+                        Ouvrir la page utilisateur
                       </button>
                     </div>
                   ))}

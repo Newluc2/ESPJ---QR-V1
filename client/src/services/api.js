@@ -29,14 +29,13 @@ export const userService = {
 }
 
 export const attendanceService = {
-  register: (userId) => api.post('/attendance/register', { userId }),
+  register: (userId, clientTimestamp) => api.post('/attendance/register', { userId, clientTimestamp }),
   getTodayAttendance: (userId) => api.get(`/attendance/today/${userId}`),
 }
 
 export const adminService = {
   getTodayAttendance: () => api.get('/admin/attendance/today'),
   getAllUsers: () => api.get('/admin/users'),
-  generateQRCode: (userId) => api.get(`/admin/qrcode/${userId}`),
   addUser: (userData) => api.post('/admin/users', userData),
 }
 

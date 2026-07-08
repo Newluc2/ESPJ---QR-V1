@@ -7,6 +7,18 @@ class SheetsService {
     this.initialized = false;
   }
 
+  getTodaySheetTitle(date = new Date()) {
+    return date.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });
+  }
+
+  getParisTime(date = new Date()) {
+    return new Date(date).toLocaleTimeString('fr-FR', {
+      timeZone: 'Europe/Paris',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
   getFieldValue(source, keys) {
     for (const key of keys) {
       const getterValue = typeof source.get === 'function' ? source.get(key) : undefined;
@@ -62,22 +74,25 @@ class SheetsService {
     return sheet;
   }
 
-  async addOrUpdateAttendance(userId, userData, type) {
+  async getTodayAttendanceSheet() {
+    return this.getOrCreateSheet(this.getTodaySheetTitle());
+  }
+
+  async addOrUpdateAttendance(userId, userData, type, clientTimestamp = null) {
     try {
-      const today = new Date().toLocaleDateString('fr-FR');
-      const sheet = await this.getOrCreateSheet('Pointages');
+      const currentDate = clientTimestamp ? new Date(clientTimestamp) : new Date();
+      const today = this.getTodaySheetTitle(currentDate);
+      const sheet = await this.getTodayAttendanceSheet();
       
       await sheet.loadHeaderRow();
       const rows = await sheet.getRows();
       
-      // Chercher la dernière ligne de l'utilisateur pour aujourd'hui (pas encore partée)
       let userRow = rows.find(row => 
         row.get('ID Utilisateur') === String(userId) && 
-        row.get('Date') === today &&
         (row.get('Heure Sortie') === '-' || row.get('Heure Sortie') === '')
       );
 
-      const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const now = this.getParisTime(currentDate);
 
       if (!userRow && type === 'arrival') {
         // Créer une nouvelle ligne pour l'arrivée
@@ -110,16 +125,13 @@ class SheetsService {
 
   async getUserAttendanceToday(userId) {
     try {
-      const today = new Date().toLocaleDateString('fr-FR');
-      const sheet = await this.getOrCreateSheet('Pointages');
+      const sheet = await this.getTodayAttendanceSheet();
       
       await sheet.loadHeaderRow();
       const rows = await sheet.getRows();
       
-      // Chercher la dernière ligne sans sortie (l'utilisateur est encore présent)
       const userRecord = rows.find(row => 
         row.get('ID Utilisateur') === String(userId) && 
-        row.get('Date') === today &&
         (row.get('Heure Sortie') === '-' || row.get('Heure Sortie') === '')
       );
 
@@ -143,14 +155,12 @@ class SheetsService {
 
   async getAllAttendanceToday() {
     try {
-      const today = new Date().toLocaleDateString('fr-FR');
-      const sheet = await this.getOrCreateSheet('Pointages');
+      const sheet = await this.getTodayAttendanceSheet();
       
       await sheet.loadHeaderRow();
       const rows = await sheet.getRows();
       
       return rows
-        .filter(row => row.get('Date') === today)
         .map(row => ({
           userId: row.get('ID Utilisateur'),
           firstName: row.get('Prénom'),

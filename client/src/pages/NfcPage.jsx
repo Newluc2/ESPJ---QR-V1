@@ -13,6 +13,7 @@ function NfcPage() {
     const storedUserId = getStoredUserId()
 
     if (storedUserId) {
+      setUserId(storedUserId)
       navigate(`/scan?userId=${encodeURIComponent(storedUserId)}`, { replace: true })
     }
   }, [navigate])
